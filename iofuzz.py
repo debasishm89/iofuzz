@@ -34,6 +34,9 @@ def formatit(s):
         buff += s[i]
     return buff
 def fuzzit(buf):
+	'''
+	Dumb fuzzing logic. You can change it your own to get good result.
+	'''
         fuzzpercent = float(0.05)
         b = list(buf)
         numwrites=random.randrange(math.ceil((float(len(buf))) * fuzzpercent))+1
