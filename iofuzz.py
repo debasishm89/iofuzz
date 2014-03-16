@@ -146,11 +146,11 @@ def parseconfig():
 			target_ioctl = int(config.get('IOCTLFuzzerConfig', 'IoctlCodeToLog', 0),16)
 		except Exception,e:
 			target_ioctl = "*"
-		print '\t[*]Process to Hook :',proc_name
-		print '\t[*]Fuzz input size :',if_fuzz_input
-		print '\t[*]Fuzz output buffer size :',if_fuzz_op_size
-		print '\t[*] IOCTL to Log ',target_ioctl
-		raw_input('[+] If above informations are corrects press enter to continue')
+		print '\t[+]Process to Hook :',proc_name
+		print '\t[+]Fuzz input size :',if_fuzz_input
+		print '\t[+]Fuzz output buffer size :',if_fuzz_op_size
+		print '\t[+] IOCTL to Log ',target_ioctl
+		raw_input('[+] If above informations are correct press enter to continue..')
 	except Exception,e:
 		print '[+] Error Reading/Parsing Config file'
 		print '[+] Usage :python iofuzz.py ioconfig.conf'
