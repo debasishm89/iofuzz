@@ -34,9 +34,6 @@ def formatit(s):
         buff += s[i]
     return buff
 def fuzzit(buf):
-	'''
-	Dumb fuzzing logic. You can change it your own to get good result.
-	'''
         fuzzpercent = float(0.05)
         b = list(buf)
         numwrites=random.randrange(math.ceil((float(len(buf))) * fuzzpercent))+1
@@ -100,16 +97,16 @@ def sniff( dbg, args ):
                 log+= '\n<outbufsize>' + hex(args[5]) + '</outbufsize>'
                 print '[+] Logging Mode : Out-Buffer Size : ',hex(args[5])
 	input_buffer = dbg.read_process_memory(args[2], int(args[3]))
-	try:
-                if fuzz_input:
-                        log += '\n<inbuffdata>' + fuzzed_data.encode('hex') + '</inbuffdata>'
-                        fuzzed_data = fuzzit(input_buffer)
-                        log += '\n<fuzzinbuffdata>' + formatit(fuzzed_data.encode('hex')) + '</fuzzinbuffdata>'
-                        print '[+] Fuzzed Input-Buffer Data :',fuzzed_data.encode('hex')
-                else:
-                        fuzzed_data = input_buffer
-                        log += '\n<inbuffdata>' + formatit(fuzzed_data.encode('hex')) + '</inbuffdata>'
-                        print '[+] Logging Mode : Input-Buffer Data :',fuzzed_data.encode('hex')
+        if fuzz_input:
+                fuzzed_data = fuzzit(input_buffer)
+                log += '\n<inbuffdata>' + fuzzed_data.encode('hex') + '</inbuffdata>'
+                log += '\n<fuzzinbuffdata>' + formatit(fuzzed_data.encode('hex')) + '</fuzzinbuffdata>'
+                print '[+] Fuzzed Input-Buffer Data :',fuzzed_data.encode('hex')
+        else:
+                fuzzed_data = input_buffer
+                log += '\n<inbuffdata>' + formatit(fuzzed_data.encode('hex')) + '</inbuffdata>'
+                print '[+] Logging Mode : Input-Buffer Data :',fuzzed_data.encode('hex')
+        try:
                 dbg.write_process_memory( args[2], fuzzed_data, int(args[3]))	#Writing fuzzed data into memory
         except Exception, e:
                 log += '\n[+] Error : Cannot Write Fuzzed Data into memory!!'
@@ -149,11 +146,12 @@ def parseconfig():
 			target_ioctl = int(config.get('IOCTLFuzzerConfig', 'IoctlCodeToLog', 0),16)
 		except Exception,e:
 			target_ioctl = "*"
-		print '\t[+]Process to Hook :',proc_name
-		print '\t[+]Fuzz input size :',if_fuzz_input
-		print '\t[+]Fuzz output buffer size :',if_fuzz_op_size
-		print '\t[+] IOCTL to Log ',target_ioctl
-		raw_input('[+] If above informations are correct press enter to continue..')
+		print '\t[*]Process to Hook :',proc_name
+		print '\t[*]Fuzz input buffer:',if_fuzz_input
+		print '\t[*]Fuzz input size :',if_fuzz_input
+		print '\t[*]Fuzz output buffer size :',if_fuzz_op_size
+		print '\t[*] IOCTL to Log ',target_ioctl
+		raw_input('[+] If above informations are corrects press enter to continue')
 	except Exception,e:
 		print '[+] Error Reading/Parsing Config file'
 		print '[+] Usage :python iofuzz.py ioconfig.conf'
