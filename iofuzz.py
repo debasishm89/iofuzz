@@ -47,8 +47,8 @@ except ImportError:
 from datetime import datetime
 import signal
 import sys
-
-
+ 
+ 
 class CMDOptions:
 	'''
 		Although optparse has very nice help banner printing options, still I just wanted to customize the help banner little bit.Nothing else :)
@@ -67,27 +67,27 @@ class CMDOptions:
 			Mandatory switches:
 			--device (Target device name Its mandatory option)
 			--inputlog (Input log collected after iofuzz sniffer, inputlog.txt and Its mandatory option)
+			Example : --mode="active" --device="MyDevice" --inputlog="iofuzz_2014_03_23_22_47_10.log" --fuzzinlen --fuzzinbuff			
 			Optional Switches:
 			--fuzzinbuff (Fuzz input buffer content False by default)
 			--fuzzinlen (Fuzz input buffer length False by default)
 			--fuzzoutlen (Fuzz input buffer length False by default)
 			--sizelimit (Length size limit 100,200 etc etc default is 10K)
-			--ioctl (Code to log / log all iocode) Ex. --ioctl=0xbadfood by default it will fuz   odes
+			--ioctl (Code to log / log all iocode) Ex. --ioctl=0xbadfood by default it will fuzz all iocodes
 		'''
 	def show_sniff_help(self):
-
+ 
 		print '''
 		When --mode="sniff" (silently log all device IO control request)
 			Mandatory switches:
-			--process (Process Name to attach with)
-			ptional Switches:
+			--process (Process Name to attach with) Example : --mode="sniff" --process="notepad.exe"
+			Optional Switches:
 			--ioctl (Code to log / log all iocode) Ex. --ioctl=0xbadfood or --ioctl="*"
 		'''
 	def cmd_option(self):
 		'''
 		Parse Options
 		'''
-		print 'set cmd options'
 		global mode,log_path,fuzzinbuff,fuzzinlen,fuzzoutlen,size_limit,process,device
 		fuzzinbuff = False
 		fuzzoutlen = False
@@ -127,9 +127,6 @@ class CMDOptions:
 				ioctl = "*"
 			if opts.size_limit:
 				size_limit = opts.size_limit
-			#if opts.fuzzinlen and opts.fuzzinbuff:
-			#	print '[Error] Please choose any one of --fuzzinlen or --fuzzinbuff switch at a time'
-			#	exit()
 			process = opts.process
 			print "Mode:",mode,"Process:",process,"Fuzz input buffer:",fuzzinbuff,"Fuzz output length:",fuzzoutlen,"Fuzz input length:",fuzzinlen,"Ioctl:",ioctl,"Max buffer length limit",size_limit
 			raw_input('[+] Press Enter to continue..')
@@ -157,7 +154,7 @@ class CMDOptions:
 			#if opts.fuzzinlen and opts.fuzzinbuff:
 			#	print '[Error] Please choose any one of --fuzzinlen or --fuzzinbuff switch at a time'
 			#	exit()			
-			print "Mode",mode,"Input Log Path:",input_log_path,"Device Name:",device,"Fuzz input buffer:",fuzzinbuff,"Fuzz output length:",fuzzoutlen,"Fuzz input length:",fuzzinlen,"Ioctl:",ioctl,"Max buffer length limit",size_limit
+			print "[+] Mode",mode,"Input Log Path:",input_log_path,"Device Name:",device,"Fuzz input buffer:",fuzzinbuff,"Fuzz output length:",fuzzoutlen,"Fuzz input length:",fuzzinlen,"Ioctl:",ioctl,"Max buffer length limit",size_limit
 			raw_input('[+] Press Enter to continue..')
 		elif mode == "sniff":
 			mandatories = ['process']
@@ -172,9 +169,9 @@ class CMDOptions:
 				ioctl = int(opts.ioctl)
 			else:
 				ioctl = "*"
-			print 'Mode:',mode,"Process Name:",process
+			print '[+] Mode:',mode,"Process Name:",process
 			raw_input('[+] Press Enter to continue..')
-
+ 
 		else:
 			print '''[+] Invalid or no mode name given. \nExample $./iofuzz.py --mode <active / passive /sniff>
 				passive => (In-memory fuzzing mode)
@@ -214,21 +211,17 @@ class Fuzzing:
 	'''
 	#Generation Based fuzzing
 	def get_long_buffer(self):
-		print '--> Get long buffer '
 		total_cases = 2
 		case = randrange(total_cases)
 		if case == 0:
-			print 'case 0'
 			#send back long strings 
 			chars = ['A','O','Z','!','@','#','$','^','*','+','\\','<','>','?','`','~','\"',"\\'",'%','%s','%d','%x','%u','%p','\xff','\x00']
 			return chars[randrange(0,26)]*randrange(0,5000)
 		if case == 1:
-			print 'case 1'
 			#send back dwords
 			dw = ['\x00\x00\x00\x00','\xFF\xFF\xFF\xFF','\xFF\xFF\x00\x00','\x00\x00\xFF\xFF']
 			return (random.choice(dw))*randrange(0,10000)
 		if case == 2:
-			print 'case 1'
 			random_byte = random.randrange(256)
 			return hex(random_byte)[2:].decode('hex')*randint(0,5000)
 	#######################################################################
@@ -238,7 +231,6 @@ class Fuzzing:
 	def get_long_len(self):
 		return randrange(0x0000,0xFFFF)
 	def get_address(self):
-		print '--> get_address called '
 		ad_case = randrange(0,1)
 		if ad_case == 0:
 			return randrange(0x00000000,0x7FFFFFFF)
@@ -251,7 +243,6 @@ class Fuzzing:
 		'''
 		if len(buf) == 0:
 			return ""
-		print '--> Get fuzzing.dumbo '
 		percent = float(0.05)
 		b = list(buf)
 		num2write=random.randrange(math.ceil((float(len(buf))) * percent))+1
@@ -267,7 +258,6 @@ class Fuzzing:
 		'''
 		if len(buff) == 0:
 			return ""		
-		print '--> Get fuzzing.dword '
 		dwords = ['\x00\x00\x00\x00','\xff\xff\xff\xff','\x00\x00\xff\xff','\xff\xff\x00\x00','\x00\x00\x01\x00']
 		dword_buff = [buff[i:i+4] for i in range(0, len(buff), 4)]
 		rand_offset = randrange(len(dword_buff))
@@ -277,7 +267,6 @@ class Fuzzing:
 		'''
 		It decides which of above defined fuzzer to be used depending on the choosen options!!
 		'''
-		print '--> Get fuzzing.fuzzit call '
 		if fuzzinlen and mode != "passive":
 			'''
 			Its sometime too risky to write long data inside memory. It may corrupt existing data structure.
@@ -301,7 +290,6 @@ class SendIoctl:
 	'''
 	def sendioctl(self,device,ioctl,input_buffer,output_buf_poi,output_len):
 		f = open('lastio.log','w')
-		print '--> Get fuzzing.send ioctl '
 		DeviceIoControl = windll.ntdll.ZwDeviceIoControlFile
 		input_size = len(input_buffer)
 		handle = kernel32.CreateFileA("\\\\.\\"+device,FILE_SHARE_WRITE|FILE_SHARE_READ,0,None,OPEN_EXISTING,0,None)
@@ -309,7 +297,9 @@ class SendIoctl:
 		address = kernel32.MapViewOfFileEx(handleMap,0x2|0x4|0x8,0,0,input_size,NULL)
 		kernel32.WriteProcessMemory(-1,address,input_buffer,input_size,byref(c_int(0)))
 		print '[*] Device: '+str(device)+' Handle: '+hex(handle)+' IOCTL: '+hex(ioctl)+' Buffer(in) Poi: '+hex(address)+' Length: '+hex(input_size)+' Buffer(out): '+hex(output_buf_poi)+' Length: '+hex(output_len)
-		log = '<device></device><ioctl></ioctl><>'
+		log = '<device>'+ device +'</device><ioctl>'+ ioctl +'</ioctl><inputbuff>'+ input_buffer +'</inputbuff><outbufpoi>'+ output_buf_poi +'</outbufpoi><outputlen>'+ output_len +'</outputlen>'
+		f.write(log)
+		f.close()
 		ret = DeviceIoControl(handle,NULL,NULL,NULL,byref(c_ulong()),ioctl,address,input_size,output_buf_poi,output_len)
 		if not ret:
 			raise IOError('DeviceIoControl() failed!')
@@ -347,15 +337,11 @@ class HooknSniff:
 		io_code = args[1]
 		out_size = args[5]
 		esp = dbg.context.Esp
+		print '[+] Intercepted IOCTL Code :',hex(io_code)
 		if mode == "passive":
-			print '--> Get passive mode '
-			#passive mode
-			#print '[+] IOCTL Code : ',hex(args[1])
 			if ioctl != "*":
-				print '--> operate only on given ioctl '
 				#operate on given ioctl
 				if args[1] == ioctl:
-					print '--> current ioctl is the ioctl to be logged , lets operate on it'
 					if fuzzinbuff:
 						fuzzed  = fuzz.fuzzit(input_buffer)
 						length = len(fuzzed)
@@ -363,7 +349,6 @@ class HooknSniff:
 						dbg.write_process_memory( esp+0x10, a.decode('hex'), 4)
 						dbg.write_process_memory( args[2], fuzzed, len(fuzzed))
 					else:
-						#Dont fuzz input buffer content
 						fuzzed = input_buffer
 					long_length = fuzz.get_long_len()
 					a = '{0:08X}'.format(long_length)
@@ -376,8 +361,6 @@ class HooknSniff:
 				else:
 					print '[+] Skipping IOCTL..',hex(args[1])
 			else:
-				print '--> oeprate on all ioctl'
-				print '--> current ioctl is the ioctl to be logged , lets operate on it'
 				if fuzzinbuff:
 					fuzzed  = fuzz.fuzzit(input_buffer)
 					length  = len(fuzzed)
@@ -398,13 +381,10 @@ class HooknSniff:
 				dbg.write_process_memory( esp+0x14, raw_length[::-1], 4)
 				helper.addtolog(io_code,fuzzed,long_out_length,rand_addr)
 		if mode == "sniff":
-			print '--> Sniffing mode'
 			#sniffing mode
 			if ioctl == "*":
-				print '--> log all intercepted ioctl'
 				helper.addtolog(io_code,input_buffer,out_size,output_buffer_poi)
 			else:
-				print '--> log only given intercepted ioctl'
 				if args[1] == ioctl:
 					#Log only this one
 					helper.addtolog(io_code,input_buffer,out_size,output_buffer_poi)
@@ -431,7 +411,6 @@ if __name__ == "__main__":
 	log_name = 'iofuzz_'+datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+".log"
 	helper.startlog(log_name)
 	if mode == "passive" or mode == "sniff":
-		print '--> sniff or passive mode'
 		global dbg
 		dbg = pydbg()
 		global hooks
@@ -450,7 +429,6 @@ if __name__ == "__main__":
 				hooks.add( dbg, hook_address, 8, hookobj.sniff, None )
 				dbg.run()
 	else:
-		print '--> active fuzzing mode'
 		ioobj = SendIoctl()
 		print '[+] Reading iocltl log file..',input_log_path
 		f = open(input_log_path,'rb')
@@ -465,17 +443,14 @@ if __name__ == "__main__":
 			iocode = re.findall('<iocode>(.*?)</iocode>',io)
 			in_buff_data = re.findall('<inbuffer>(.*?)</inbuffer>',io)
 			if ioctl == "*":
-				print '--> active fuzzing mode: fuzz all iocode in log'
 				if fuzzinbuff:
 					fuzzed_data = fuzz.fuzzit(in_buff_data[0])	
 				else:
 					fuzzed_data = in_buff_data[0]
 				out_address = fuzz.get_address()
 				out_len = fuzz.get_long_len()
-				#sendioclt(device_name, iocode,fuzzed_in_data,out_buff_poi,out_size)
 				ioobj.sendioctl(device,int(iocode[0],16),fuzzed_data,out_address,out_len)
 			else:
-				print '--> active fuzzing mode: fuzz only given iocode in log'
 				if int(iocode[0],16) == ioctl:
 					if fuzzinbuff:
 						fuzzed_data = fuzz.fuzzit(in_buff_data[0])
@@ -483,7 +458,6 @@ if __name__ == "__main__":
 						fuzzed_data = in_buff_data[0]
 					out_address = fuzz.get_address()
 					out_len = fuzz.get_long_len()
-					#sendioclt(device_name, iocode,fuzzed_in_data,out_buff_poi,out_size)
 					ioobj.sendioctl(device,int(iocode[0],16),fuzzed_data,out_address,out_len)
 				else:
 					pass
